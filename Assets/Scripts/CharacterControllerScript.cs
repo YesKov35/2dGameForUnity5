@@ -4,7 +4,7 @@ using UnityEngine.Networking;
 
 public class CharacterControllerScript : NetworkBehaviour
 {
-    public float maxSpeed = 10f;
+    public float maxSpeed = 7f;
     bool facingRight = true;
     public Rigidbody2D Body;
 
@@ -34,7 +34,7 @@ public class CharacterControllerScript : NetworkBehaviour
 
             float move = Input.GetAxis("Horizontal");
 
-            anim.SetFloat("Speed", Mathf.Abs(move));
+            anim.SetFloat("Speed", Mathf.Abs(Body.velocity.x));
 
             Body.velocity = new Vector2(move * maxSpeed, Body.velocity.y);
 

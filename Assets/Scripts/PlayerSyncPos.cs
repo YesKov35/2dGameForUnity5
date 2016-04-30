@@ -5,12 +5,7 @@ using UnityEngine.Networking;
 public class PlayerSyncPos : NetworkBehaviour
 {
     [SyncVar]
-    private Vector2 syncPosition;
-
-    [SyncVar]
     private Vector3 syncScale;
-
-    public float lerpSpeed;
 
     void FixedUpdate()
     {
@@ -22,7 +17,6 @@ public class PlayerSyncPos : NetworkBehaviour
     {
         if (!isLocalPlayer)
         {
-            transform.position = Vector2.Lerp(transform.position, syncPosition, Time.deltaTime * lerpSpeed);
             transform.localScale = syncScale;
         }
     }
@@ -32,14 +26,13 @@ public class PlayerSyncPos : NetworkBehaviour
     {
         if (isLocalPlayer)
         {
-            CmdSendPosition(transform.position, transform.localScale);
+            CmdSendPosition(transform.localScale);
         }
     }
 
     [Command]
-    void CmdSendPosition(Vector2 pos, Vector3 client_scale)
+    void CmdSendPosition(Vector3 client_scale)
     {
-        syncPosition = pos;
         syncScale = client_scale;
     }
 
