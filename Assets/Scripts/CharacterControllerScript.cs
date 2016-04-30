@@ -60,6 +60,14 @@ public class CharacterControllerScript : NetworkBehaviour
         {
             Body.AddForce(new Vector2(0, jumpForce));
         }
+        if(!anim.GetBool("Keydown") && Input.GetKeyDown(KeyCode.Mouse0))
+        {
+            anim.SetBool("Keydown", true);
+        }
+        if (anim.GetBool("Keydown") && Input.GetKeyUp(KeyCode.Mouse0))
+        {
+            anim.SetBool("Keydown", false);
+        }
     }
 
     void Flip()
