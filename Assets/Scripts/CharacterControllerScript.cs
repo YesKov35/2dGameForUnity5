@@ -4,12 +4,18 @@ using UnityEngine.Networking;
 
 public class CharacterControllerScript : NetworkBehaviour
 {
-    public float maxSpeed = 10f;
+    public float maxSpeed = 7f;
     bool facingRight = true;
     public Rigidbody2D Body;
 
+    bool grounded = false;
+    public LayerMask whatIsGround;
+    public Transform groundCheck;
+    float groundRadius = 0.2f;
+    public float jumpForce = 300f;
+
     Animator anim;
-    public Camera cam;
+    Camera cam;
 
     // Use this for initialization
     void Start ()
@@ -24,9 +30,11 @@ public class CharacterControllerScript : NetworkBehaviour
     {
         if (isLocalPlayer)
         {
+            grounded = Physics2D.OverlapCircle(groundCheck.position, groundRadius, whatIsGround);
+
             float move = Input.GetAxis("Horizontal");
 
-            anim.SetFloat("Speed", Mathf.Abs(move));
+            anim.SetFloat("Speed", Mathf.Abs(Body.velocity.x));
 
             Body.velocity = new Vector2(move * maxSpeed, Body.velocity.y);
 
@@ -44,6 +52,22 @@ public class CharacterControllerScript : NetworkBehaviour
             }
         }
 
+    }
+
+    void Update()
+    {
+        if(grounded && Input.GetKeyDown(KeyCode.Space))
+        {
+            Body.AddForce(new Vector2(0, jumpForce));
+        }
+        if(!anim.GetBool("Keydown") && Input.GetKeyDown(KeyCode.Mouse0))
+        {
+            anim.SetBool("Keydown", true);
+        }
+        if (anim.GetBool("Keydown") && Input.GetKeyUp(KeyCode.Mouse0))
+        {
+            anim.SetBool("Keydown", false);
+        }
     }
 
     void Flip()
