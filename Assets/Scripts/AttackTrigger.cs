@@ -7,7 +7,7 @@ public class AttackTrigger : MonoBehaviour {
     {
         if(col.CompareTag("Player"))
         {
-            col.SendMessageUpwards("Damage");
+            gameObject.SendMessageUpwards("Hit", col.transform.name);
         }
     }
 }

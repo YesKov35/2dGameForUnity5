@@ -3,8 +3,14 @@ using System.Collections;
 using UnityEngine.UI;
 using UnityEngine.Networking;
 
-public class CharacterControllerScript : NetworkBehaviour
+public class Player : NetworkBehaviour
 {
+    [SyncVar]
+    public int hp = 100;
+
+    [SyncVar]
+    bool hit = false;
+
     public float maxSpeed = 7f;
     bool facingRight = true;
     public Rigidbody2D Body;
@@ -15,35 +21,68 @@ public class CharacterControllerScript : NetworkBehaviour
     float groundRadius = 0.2f;
     public float jumpForce = 500f;
 
-    public float hp = 100;
-
     Animator anim;
     Camera cam;
 
     // Use this for initialization
     void Start ()
     {
+        transform.name = "Player" + GetComponent<NetworkIdentity>().netId.ToString();
         cam = transform.GetComponentInChildren<Camera>().GetComponent<Camera>();
         anim = GetComponent<Animator>();
         Body = GetComponent<Rigidbody2D>();
-
-        Text txt = GameObject.FindGameObjectWithTag("Text").GetComponent<Text>();
-        txt.text = hp.ToString();
+        //Text txt = GameObject.FindGameObjectWithTag("Text").GetComponent<Text>();
+        //txt.text = hp.ToString();
     }
-	
-	// Update is called once per frame
-	void FixedUpdate ()
+    [Client]
+    public void Hit(string id)
     {
         if (isLocalPlayer)
         {
-            //grounded = Physics2D.OverlapCircle(groundCheck.position, groundRadius, whatIsGround);
+            CmdHit(id, 10);
+        }
+    }
 
+    [Command]
+	void CmdHit(string id, int dmg)
+    {
+        GameObject go = GameObject.Find(id);
+        go.GetComponent<Player>().GetDamage(dmg);
+    }
+
+    void OnGUI()
+    {
+        if(isLocalPlayer)
+        {
+            GUI.Label(new Rect(Screen.width - 100, 25, 200, 50), "HP: " + hp);
+        }
+    }
+
+    //Получение урона
+    public void GetDamage(int dmg)
+    {
+        hp -= dmg;
+        hit = true;
+    }
+	// Update is called once per frame
+	void FixedUpdate ()
+    {
+        if (hit)
+            {
+                gameObject.GetComponent<Animation>().Play("damage");
+                hit = false;
+            }
+        if (isLocalPlayer)
+        {
+            //grounded = Physics2D.OverlapCircle(groundCheck.position, groundRadius, whatIsGround);
             float move = Input.GetAxis("Horizontal");
 
-            anim.SetFloat("Speed", Mathf.Abs(Body.velocity.x));
+            if (!anim.GetBool("Protect"))
+            {
+                anim.SetFloat("Speed", Mathf.Abs(Body.velocity.x));
 
-            Body.velocity = new Vector2(move * maxSpeed, Body.velocity.y);
-
+                Body.velocity = new Vector2(move * maxSpeed, Body.velocity.y);
+            }
             if (move > 0 && !facingRight)
                 Flip();
             else if (move < 0 && facingRight)
@@ -57,7 +96,6 @@ public class CharacterControllerScript : NetworkBehaviour
                 cam.gameObject.GetComponent<AudioListener>().enabled = false;
             }
         }
-
     }
 
     void Update()
@@ -73,15 +111,22 @@ public class CharacterControllerScript : NetworkBehaviour
                 anim.SetBool("Keydown", true);
                 
             }
-            if (anim.GetBool("Keydown") && Input.GetKeyUp(KeyCode.Mouse0))
+            else if (anim.GetBool("Keydown") && Input.GetKeyUp(KeyCode.Mouse0))
             {
                 anim.SetBool("Keydown", false);
             }
 
-            if(Input.GetKeyUp(KeyCode.F))
+            if (!anim.GetBool("Protect") && Input.GetKeyDown(KeyCode.Mouse1))
             {
-                Damage();
+                anim.SetBool("Protect", true);
+                anim.SetFloat("Speed", 0);
+                Body.velocity = new Vector2(0, Body.velocity.y);
+
             }
+            /*if (anim.GetBool("Protect") && Input.GetKeyUp(KeyCode.Mouse1))
+            {
+                anim.SetBool("Protect", false);
+            }*/
         }
     }
 
@@ -91,10 +136,5 @@ public class CharacterControllerScript : NetworkBehaviour
         Vector3 theScale = transform.localScale;
         theScale.x *= -1;
         transform.localScale = theScale; 
-    }
-
-    public void Damage()
-    {
-        gameObject.GetComponent<Animation>().Play("damage");
     }
 }
