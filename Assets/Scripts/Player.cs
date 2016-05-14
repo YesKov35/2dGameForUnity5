@@ -109,16 +109,18 @@ public class Player : NetworkBehaviour
             if (!anim.GetBool("Keydown") && Input.GetKeyDown(KeyCode.Mouse0))
             {
                 anim.SetBool("Keydown", true);
+                maxSpeed = 3f;
                 
             }
             else if (anim.GetBool("Keydown") && Input.GetKeyUp(KeyCode.Mouse0))
             {
                 anim.SetBool("Keydown", false);
+                maxSpeed = 7f;
             }
 
-            if (!anim.GetBool("Protect") && Input.GetKeyDown(KeyCode.Mouse1))
+            if (/*!anim.GetBool("Protect") &&*/ Input.GetKeyDown(KeyCode.Mouse1))
             {
-                anim.SetBool("Protect", true);
+                anim.SetBool("Protect", !anim.GetBool("Protect"));
                 anim.SetFloat("Speed", 0);
                 Body.velocity = new Vector2(0, Body.velocity.y);
 

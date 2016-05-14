@@ -8,12 +8,19 @@ public class AttackTrigger : MonoBehaviour {
         if(col.CompareTag("Player"))
         {
             bool block = col.GetComponent<Animator>().GetBool("Protect");
-            //bool fr = col.GetComponent<Player>().GetFacingRight();
             float s = col.transform.localScale.x;
             if(block)
             {
                 if((gameObject.transform.position.x > col.transform.position.x && s > 0) || (gameObject.transform.position.x < col.transform.position.x && s < 0))
                 {
+                    if(gameObject.transform.position.x > col.transform.position.x)
+                    {
+                        col.GetComponent<Rigidbody2D>().AddForce(new Vector2(-3, 0), ForceMode2D.Impulse);
+                    }
+                    else
+                    {
+                        col.GetComponent<Rigidbody2D>().AddForce(new Vector2(3, 0), ForceMode2D.Impulse);
+                    }
                     return;
                 }
             }
