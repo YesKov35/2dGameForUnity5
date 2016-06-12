@@ -6,34 +6,79 @@ using UnityEngine.Networking;
 public class Player : NetworkBehaviour
 {
     [SyncVar]
-    public int hp = 100;
+    public int hp = 150;
 
     [SyncVar]
     bool hit = false;
 
     public float maxSpeed = 7f;
     bool facingRight = true;
+    bool spell = false;
     public Rigidbody2D Body;
+    Camera menuCamera;
 
     bool grounded = false;
     public LayerMask whatIsGround;
     public Transform groundCheck;
     float groundRadius = 0.2f;
-    public float jumpForce = 500f;
+    public float jumpForce;
+
+
+	bool death = false;
 
     Animator anim;
     Camera cam;
 
+	float timer;
+	public float spawnTime;
+
     // Use this for initialization
     void Start ()
     {
-        transform.name = "Player" + GetComponent<NetworkIdentity>().netId.ToString();
-        cam = transform.GetComponentInChildren<Camera>().GetComponent<Camera>();
-        anim = GetComponent<Animator>();
-        Body = GetComponent<Rigidbody2D>();
-        //Text txt = GameObject.FindGameObjectWithTag("Text").GetComponent<Text>();
-        //txt.text = hp.ToString();
+		menuCamera = GameObject.FindWithTag("MainCamera").GetComponent<Camera>();
+		transform.name = "Player" + GetComponent<NetworkIdentity>().netId.ToString();
+		cam = transform.GetComponentInChildren<Camera>().GetComponent<Camera>();
+		anim = GetComponent<Animator>();
+		Body = GetComponent<Rigidbody2D>();
+		//Text txt = GameObject.FindGameObjectWithTag("Text").GetComponent<Text>();
+		//txt.text = hp.ToString();
+		menuCamera.enabled = false;
     }
+
+	public bool GetDeath()
+	{
+		return death;
+	}
+
+    public void Respawn()
+    {
+        if (isLocalPlayer)
+        {
+            death = false;
+            menuCamera.enabled = false;
+            anim.SetBool("Death", false);
+            Cmdqwe();
+        }
+    }
+
+    [Command]
+    void Cmdqwe()
+    {
+        hp = 100;
+    }
+    public void DestroyPlayer()
+    {
+        if (isLocalPlayer)
+        {
+            death = true;
+            anim.SetFloat("Speed", 0);
+            Body.velocity = new Vector2(0, Body.velocity.y);
+            menuCamera.enabled = true;
+            anim.SetBool("Death", true);
+            hp = 100;
+        }
+    }
+
     [Client]
     public void Hit(string id)
     {
@@ -44,10 +89,10 @@ public class Player : NetworkBehaviour
     }
 
     [Command]
-	void CmdHit(string id, int dmg)
+	public void CmdHit(string id, int dmg)
     {
         GameObject go = GameObject.Find(id);
-        go.GetComponent<Player>().GetDamage(dmg);
+        go.GetComponent<Player>().CmdGetDamage(dmg);
     }
 
     void OnGUI()
@@ -59,7 +104,8 @@ public class Player : NetworkBehaviour
     }
 
     //Получение урона
-    public void GetDamage(int dmg)
+    [Command]
+    public void CmdGetDamage(int dmg)
     {
         hp -= dmg;
         hit = true;
@@ -67,14 +113,22 @@ public class Player : NetworkBehaviour
 	// Update is called once per frame
 	void FixedUpdate ()
     {
-        if (hit)
-            {
-                gameObject.GetComponent<Animation>().Play("damage");
-                hit = false;
-            }
+        if (hp < 0)
+        {
+            DestroyPlayer();
+        }
+        if (hit) 
+		{
+			gameObject.GetComponent<Animation> ().Play ("damage");
+			hit = false;
+		}
         if (isLocalPlayer)
         {
-            //grounded = Physics2D.OverlapCircle(groundCheck.position, groundRadius, whatIsGround);
+            grounded = Physics2D.OverlapCircle(groundCheck.position, groundRadius, whatIsGround);
+            anim.SetBool("Ground", grounded);
+
+            anim.SetFloat("vSpeed", Body.velocity.y);
+
             float move = Input.GetAxis("Horizontal");
 
             if (!anim.GetBool("Protect"))
@@ -98,14 +152,46 @@ public class Player : NetworkBehaviour
         }
     }
 
-    void Update()
+    void SpellEnd()
     {
-        if(/*grounded &&*/ Input.GetKeyDown(KeyCode.Space))
-        {
-            Body.AddForce(new Vector2(0, jumpForce));
-        }
+		anim.SetBool("Spell", false);
+    }
+
+    void SpellStart()
+    {
+		anim.SetBool("Spell", true);
+    }
+
+    void Update()
+	{
         if (isLocalPlayer)
         {
+            if (death)
+            {
+                timer += Time.deltaTime;
+                if (timer > spawnTime)
+                {
+                    Respawn();
+                    timer = 0;
+                }
+            }
+            if (!anim.GetBool("Protect") && Input.GetKeyDown(KeyCode.LeftControl) && !anim.GetBool("Spell"))
+            {
+				anim.SetBool("Spell", true);
+                if (Body.transform.localScale.x > 0)
+                {
+                    Body.AddForce(new Vector2(5000, 200));
+                }
+                else
+                {
+                    Body.AddForce(new Vector2(-5000, 200));
+                }
+            }
+            if (/*grounded &&*/ Input.GetKeyDown(KeyCode.Space))
+            {
+                Body.AddForce(new Vector2(0, jumpForce), ForceMode2D.Force);
+            }
+
             if (!anim.GetBool("Keydown") && Input.GetKeyDown(KeyCode.Mouse0))
             {
                 anim.SetBool("Keydown", true);
@@ -129,6 +215,11 @@ public class Player : NetworkBehaviour
             {
                 anim.SetBool("Protect", false);
             }*/
+
+			if (Input.GetKeyDown(KeyCode.O))
+			{
+				DestroyPlayer ();
+			}
         }
     }
 

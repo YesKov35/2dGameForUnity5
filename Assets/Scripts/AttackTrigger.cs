@@ -9,22 +9,27 @@ public class AttackTrigger : MonoBehaviour {
         {
             bool block = col.GetComponent<Animator>().GetBool("Protect");
             float s = col.transform.localScale.x;
-            if(block)
-            {
-                if((gameObject.transform.position.x > col.transform.position.x && s > 0) || (gameObject.transform.position.x < col.transform.position.x && s < 0))
-                {
-                    if(gameObject.transform.position.x > col.transform.position.x)
-                    {
-                        col.GetComponent<Rigidbody2D>().AddForce(new Vector2(-3, 0), ForceMode2D.Impulse);
-                    }
-                    else
-                    {
-                        col.GetComponent<Rigidbody2D>().AddForce(new Vector2(3, 0), ForceMode2D.Impulse);
-                    }
-                    return;
-                }
-            }
+			int n = 30;
+			if (!block)
+				n = 300;
+            
+			if ((gameObject.transform.position.x > col.transform.position.x && s > 0 && block) || (gameObject.transform.position.x < col.transform.position.x && s < 0 && block) || !block) 
+			{
+				if (gameObject.transform.position.x > col.transform.position.x) 
+				{
+					col.GetComponent<Rigidbody2D> ().AddForce (new Vector2 (-n, 0));
+					if (block)
+						return;
+				} 
+				else 
+				{
+					col.GetComponent<Rigidbody2D> ().AddForce (new Vector2 (n, 0));
+					if (block)
+						return;
+				}
+			}
             gameObject.SendMessageUpwards("Hit", col.transform.name);
+            //col.GetComponent<Player>().CmdHit(col.transform.name, 10);
         }
     }
 }

@@ -63,7 +63,8 @@ namespace UnityEngine.Networking
 				if (GUI.Button(new Rect(xpos, ypos, 200, 20), "LAN Host(H)"))
 				{
 					manager.StartHost();
-				}
+
+                }
 				ypos += spacing;
 
 				if (GUI.Button(new Rect(xpos, ypos, 105, 20), "LAN Client(C)"))
