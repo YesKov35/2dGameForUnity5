@@ -33,8 +33,8 @@ namespace Prototype.NetworkLobby
 
         public Button backButton;
 
-        public Text statusInfo;
-        public Text hostInfo;
+        public Text Name;
+        public Button colorP;
 
         //Client numPlayers from NetworkManager is always 0, so we count (throught connect/destroy in LobbyPlayer) the number
         //of players, so that even client know how many player there is.
@@ -61,8 +61,6 @@ namespace Prototype.NetworkLobby
             GetComponent<Canvas>().enabled = true;
 
             DontDestroyOnLoad(gameObject);
-
-            SetServerInfo("Offline", "None");
         }
 
         public override void OnLobbyClientSceneChanged(NetworkConnection conn)
@@ -136,7 +134,6 @@ namespace Prototype.NetworkLobby
             else
             {
                 backButton.gameObject.SetActive(false);
-                SetServerInfo("Offline", "None");
                 _isMatchmaking = false;
             }
         }
@@ -147,10 +144,10 @@ namespace Prototype.NetworkLobby
             infoPanel.Display("Connecting...", "Cancel", () => { _this.backDelegate(); });
         }
 
-        public void SetServerInfo(string status, string host)
+        public void SetServerInfo(string name, Color color)
         {
-            statusInfo.text = status;
-            hostInfo.text = host;
+            Name.text = name;
+            colorP.GetComponent<Image>().color = color;
         }
 
 
@@ -218,9 +215,6 @@ namespace Prototype.NetworkLobby
             conn.Send(MsgKicked, new KickMsg());
         }
 
-
-
-
         public void KickedMessageHandler(NetworkMessage netMsg)
         {
             infoPanel.Display("Kicked by Server", "Close", null);
@@ -235,7 +229,6 @@ namespace Prototype.NetworkLobby
 
             ChangeTo(lobbyPanel);
             backDelegate = StopHostClbk;
-            SetServerInfo("Hosting", networkAddress);
         }
 
         public override void OnMatchCreate(CreateMatchResponse matchInfo)
@@ -270,8 +263,9 @@ namespace Prototype.NetworkLobby
         public override GameObject OnLobbyServerCreateLobbyPlayer(NetworkConnection conn, short playerControllerId)
         {
             GameObject obj = Instantiate(lobbyPlayerPrefab.gameObject) as GameObject;
-
+            
             LobbyPlayer newPlayer = obj.GetComponent<LobbyPlayer>();
+
             newPlayer.ToggleJoinButton(numPlayers + 1 >= minPlayers);
 
 
@@ -322,9 +316,18 @@ namespace Prototype.NetworkLobby
         {
             //This hook allows you to apply state data from the lobby-player to the game-player
             //just subclass "LobbyHook" and add it to the lobby object.
+            if (lobbyPlayer.GetComponent<LobbyPlayer>().playerColor == Color.red)
+            {
+                gamePlayer.GetComponent<Player>().clanName = "red";
+            }
+            else
+            {
+                gamePlayer.GetComponent<Player>().clanName = "green";
+            }
             if (_lobbyHooks)
+            {
                 _lobbyHooks.OnLobbyServerSceneLoadedForPlayer(this, lobbyPlayer, gamePlayer);
-
+            }
             return true;
         }
 
@@ -394,7 +397,6 @@ namespace Prototype.NetworkLobby
             {//only to do on pure client (not self hosting client)
                 ChangeTo(lobbyPanel);
                 backDelegate = StopClientClbk;
-                SetServerInfo("Client", networkAddress);
             }
         }
 

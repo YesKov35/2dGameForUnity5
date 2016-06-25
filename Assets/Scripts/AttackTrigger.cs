@@ -5,8 +5,13 @@ public class AttackTrigger : MonoBehaviour {
 
     void OnTriggerEnter2D(Collider2D col)
     {
-        if(col.CompareTag("Player"))
+        if (col.CompareTag("Player"))
         {
+            if (gameObject.GetComponentInParent<Player>().clanName.Equals(col.GetComponent<Player>().clanName) || col.GetComponent<Player>().GetDeath())
+            {
+                return;
+            }
+
             bool block = col.GetComponent<Animator>().GetBool("Protect");
             float s = col.transform.localScale.x;
 			int n = 30;
@@ -27,8 +32,18 @@ public class AttackTrigger : MonoBehaviour {
 					if (block)
 						return;
 				}
-			}
-            gameObject.SendMessageUpwards("Hit", col.transform.name);
+
+            }
+            //GameObject go = GameObject.Find(col.transform.name);
+            //if ((go.GetComponent<Player>().hp - 10) <= 0 && col.GetComponent<Player>().hp > 0)
+            //{
+                //gameObject.GetComponentInParent<Player>().kill += 1;
+                //gameObject.SendMessageUpwards("Kill", gameObject.GetComponentInParent<Player>().transform.name);
+            //}
+            object[] tempStorage = new object[2];
+            tempStorage[0] = col.transform.name;
+            tempStorage[1] = gameObject.GetComponentInParent<Player>().transform.name;
+            gameObject.SendMessageUpwards("Hit", tempStorage);
             //col.GetComponent<Player>().CmdHit(col.transform.name, 10);
         }
     }

@@ -8,7 +8,7 @@ namespace Prototype.NetworkLobby
     {
         public bool isInGame = false;
 
-        protected bool isDisplayed = true;
+        protected bool isDisplayed = false;
         protected Image panelImage;
 
         void Start()

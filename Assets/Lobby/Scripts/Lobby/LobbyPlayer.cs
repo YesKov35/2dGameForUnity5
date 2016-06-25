@@ -11,7 +11,6 @@ namespace Prototype.NetworkLobby
     //Any LobbyHook can then grab it and pass those value to the game player prefab (see the Pong Example in the Samples Scenes)
     public class LobbyPlayer : NetworkLobbyPlayer
     {
-
         public Button colorButton;
         public InputField nameInput;
         public Button readyButton;
@@ -35,14 +34,9 @@ namespace Prototype.NetworkLobby
         static Color ReadyColor = new Color(0.0f, 204.0f / 255.0f, 204.0f / 255.0f, 1.0f);
         static Color TransparentColor = new Color(0, 0, 0, 0);
 
-        //static Color OddRowColor = new Color(250.0f / 255.0f, 250.0f / 255.0f, 250.0f / 255.0f, 1.0f);
-        //static Color EvenRowColor = new Color(180.0f / 255.0f, 180.0f / 255.0f, 180.0f / 255.0f, 1.0f);
-
-
         public override void OnClientEnterLobby()
         {
             base.OnClientEnterLobby();
-
             if (LobbyManager.s_Singleton != null) LobbyManager.s_Singleton.OnPlayersNumberModified(1);
 
             LobbyPlayerList._instance.AddPlayer(this);
@@ -171,6 +165,8 @@ namespace Prototype.NetworkLobby
                 colorButton.interactable = isLocalPlayer;
                 nameInput.interactable = isLocalPlayer;
             }
+            if (isLocalPlayer)
+                SetPlayerInfo();
         }
 
         public void OnPlayerListChanged(int idx)
@@ -209,6 +205,7 @@ namespace Prototype.NetworkLobby
         public void OnNameChanged(string str)
         {
             CmdNameChanged(str);
+            SetPlayerInfo();
         }
 
         public void OnRemovePlayerClick()
@@ -267,6 +264,11 @@ namespace Prototype.NetworkLobby
         {
             LobbyPlayerList._instance.RemovePlayer(this);
             if (LobbyManager.s_Singleton != null) LobbyManager.s_Singleton.OnPlayersNumberModified(-1);
+        }
+
+        void SetPlayerInfo()
+        {
+            LobbyManager.s_Singleton.SetServerInfo(playerName, playerColor);
         }
     }
 }

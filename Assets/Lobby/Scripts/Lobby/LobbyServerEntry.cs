@@ -17,7 +17,7 @@ namespace Prototype.NetworkLobby
         {
             serverInfoText.text = match.name;
 
-            slotInfo.text = match.currentSize.ToString() + "/" + match.maxSize.ToString(); ;
+            slotInfo.text = match.currentSize.ToString() + "/" + match.maxSize.ToString();
 
             NetworkID networkID = match.networkId;
 

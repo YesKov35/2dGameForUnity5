@@ -6,12 +6,29 @@ using UnityEngine.Networking;
 public class Player : NetworkBehaviour
 {
     [SyncVar]
-    public int hp = 150;
+    public int hp;
+
+    public int stamina;
+    public int max_stamina;
+    public int exp;
+
+    //Test1
+    [SyncVar]
+    string namehodamage;
+
+    [SyncVar]
+    public int kill = 0;
+
+    int cur_kill = 0;
+
+    int count = 0;
 
     [SyncVar]
     bool hit = false;
 
-    public float maxSpeed = 7f;
+    float Speed;
+    public float normalSpeed;
+    public float runSpeed;
     bool facingRight = true;
     bool spell = false;
     public Rigidbody2D Body;
@@ -23,7 +40,10 @@ public class Player : NetworkBehaviour
     float groundRadius = 0.2f;
     public float jumpForce;
 
+    [SyncVar]
+    public string clanName;
 
+    [SyncVar]
 	bool death = false;
 
     Animator anim;
@@ -31,6 +51,12 @@ public class Player : NetworkBehaviour
 
 	float timer;
 	public float spawnTime;
+
+    Text up_hp;
+    Text up_sm;
+    Text up_mp;
+
+    Menu_HUD menu;
 
     // Use this for initialization
     void Start ()
@@ -40,9 +66,22 @@ public class Player : NetworkBehaviour
 		cam = transform.GetComponentInChildren<Camera>().GetComponent<Camera>();
 		anim = GetComponent<Animator>();
 		Body = GetComponent<Rigidbody2D>();
-		//Text txt = GameObject.FindGameObjectWithTag("Text").GetComponent<Text>();
-		//txt.text = hp.ToString();
-		menuCamera.enabled = false;
+        Speed = normalSpeed;
+
+        menu = GameObject.FindWithTag("menu").GetComponent<Menu_HUD>();
+
+        menuCamera.enabled = false;
+        if (clanName == "red")
+        {
+            Body.transform.position = new Vector3(60, 0, 0);
+        }
+        else
+        {
+            Body.transform.position = new Vector3(0, 0, 0);
+        }
+
+        if (isLocalPlayer)
+            menu.player = this;
     }
 
 	public bool GetDeath()
@@ -52,76 +91,122 @@ public class Player : NetworkBehaviour
 
     public void Respawn()
     {
-        if (isLocalPlayer)
+        if (isLocalPlayer && death)
         {
-            death = false;
+            CmdSetDeath(false);
             menuCamera.enabled = false;
             anim.SetBool("Death", false);
-            Cmdqwe();
+            if (clanName == "red")
+            {
+                Body.transform.position = new Vector3(60, 0, 0);
+            }
+            else
+            {
+                Body.transform.position = new Vector3(0, 0, 0);
+            }
+
         }
     }
 
     [Command]
-    void Cmdqwe()
+    void CmdSetDeath(bool flag)
     {
-        hp = 100;
+        death = flag;
     }
+
+    [Command]
+    void CmdHP()
+    {
+        hp += 100;
+    }
+
     public void DestroyPlayer()
     {
-        if (isLocalPlayer)
+        if (isLocalPlayer && !death)
         {
-            death = true;
-            anim.SetFloat("Speed", 0);
-            Body.velocity = new Vector2(0, Body.velocity.y);
             menuCamera.enabled = true;
             anim.SetBool("Death", true);
-            hp = 100;
+            death = true;
+            CmdSetDeath(death);
+            CmdKill(namehodamage);
         }
     }
 
     [Client]
-    public void Hit(string id)
+    public void Hit(object[] id)
     {
         if (isLocalPlayer)
         {
-            CmdHit(id, 10);
+            CmdHit(id[0].ToString(), id[1].ToString(), 10);
         }
     }
 
     [Command]
-	public void CmdHit(string id, int dmg)
+	public void CmdHit(string id, string id2, int dmg)
     {
         GameObject go = GameObject.Find(id);
-        go.GetComponent<Player>().CmdGetDamage(dmg);
+        go.GetComponent<Player>().CmdGetDamage(id2, dmg);
+    }
+
+    [Client]
+    public void Kill(string id)
+    {
+        if (isLocalPlayer)
+        {
+            //CmdKill(id);
+        }
+    }
+
+    [Command]
+    public void CmdKill(string id)
+    {
+        GameObject go = GameObject.Find(id);
+        go.GetComponent<Player>().CmdGetKill();
+    }
+
+    [Command]
+    public void CmdGetKill()
+    {
+        kill += 1;
     }
 
     void OnGUI()
     {
-        if(isLocalPlayer)
+        if (isLocalPlayer)
         {
             GUI.Label(new Rect(Screen.width - 100, 25, 200, 50), "HP: " + hp);
+            GUI.Label(new Rect(Screen.width - 100, 75, 200, 50), "SM: " + stamina);
+            GUI.Label(new Rect(Screen.width - 100, 125, 200, 50), "EXP: " + exp);
+            GUI.Label(new Rect(100, 25, 200, 50), "KILL: " + kill);
+            GUI.Label(new Rect(Screen.width/2, 25, 200, 50), ((int)Time.timeSinceLevelLoad).ToString());
+            if (death)
+            {
+                GUI.Label(new Rect(Screen.width / 2, Screen.height / 2, 500, 150), ((int)timer).ToString());
+            }
         }
     }
 
     //Получение урона
     [Command]
-    public void CmdGetDamage(int dmg)
+    public void CmdGetDamage(string id, int dmg)
     {
-        hp -= dmg;
-        hit = true;
-    }
-	// Update is called once per frame
-	void FixedUpdate ()
-    {
-        if (hp < 0)
+        if (!death)
         {
-            DestroyPlayer();
+            namehodamage = id;
+            hp -= dmg;
+            hit = true;
         }
-        if (hit) 
-		{
-			gameObject.GetComponent<Animation> ().Play ("damage");
-			hit = false;
-		}
+    }
+    // Update is called once per frame
+    void FixedUpdate()
+    {
+        //if (death)
+           // return;
+        if (hit)
+        {
+            gameObject.GetComponent<Animation>().Play("damage");
+            hit = false;
+        }
         if (isLocalPlayer)
         {
             grounded = Physics2D.OverlapCircle(groundCheck.position, groundRadius, whatIsGround);
@@ -131,11 +216,11 @@ public class Player : NetworkBehaviour
 
             float move = Input.GetAxis("Horizontal");
 
-            if (!anim.GetBool("Protect"))
+            if (!anim.GetBool("Protect") || death)
             {
                 anim.SetFloat("Speed", Mathf.Abs(Body.velocity.x));
 
-                Body.velocity = new Vector2(move * maxSpeed, Body.velocity.y);
+                Body.velocity = new Vector2(move * Speed, Body.velocity.y);
             }
             if (move > 0 && !facingRight)
                 Flip();
@@ -157,25 +242,47 @@ public class Player : NetworkBehaviour
 		anim.SetBool("Spell", false);
     }
 
-    void SpellStart()
-    {
-		anim.SetBool("Spell", true);
-    }
-
     void Update()
 	{
         if (isLocalPlayer)
         {
-            if (death)
+            menu.Name(namehodamage);
+            if (hp <= 0 && !death)
+            {
+                timer = 0;
+                DestroyPlayer();
+                CmdHP();
+            }
+            else if (death)
             {
                 timer += Time.deltaTime;
                 if (timer > spawnTime)
                 {
                     Respawn();
-                    timer = 0;
                 }
+                return;
             }
-            if (!anim.GetBool("Protect") && Input.GetKeyDown(KeyCode.LeftControl) && !anim.GetBool("Spell"))
+            if (Speed == runSpeed && stamina == 0)
+            {
+                Speed = normalSpeed;
+                anim.speed = 1;
+            }
+            if (count < (int)Time.timeSinceLevelLoad)
+            {
+                int n = (int)Time.timeSinceLevelLoad - count;
+
+                if ((stamina + 10) <= max_stamina && Speed < runSpeed && !anim.GetBool("Keydown"))
+                    stamina += 10;
+                else if (Speed == runSpeed && stamina > 0)
+                    stamina -= 10;
+                count = (int)Time.timeSinceLevelLoad;
+            }
+            if (cur_kill < kill)
+            {
+                exp += (kill - cur_kill) * 20;
+                cur_kill = kill;
+            }
+            if (!anim.GetBool("Protect") && Input.GetKeyDown(KeyCode.LeftControl) && !anim.GetBool("Spell") && stamina >= 50)
             {
 				anim.SetBool("Spell", true);
                 if (Body.transform.localScale.x > 0)
@@ -186,6 +293,7 @@ public class Player : NetworkBehaviour
                 {
                     Body.AddForce(new Vector2(-5000, 200));
                 }
+                stamina -= 50;
             }
             if (/*grounded &&*/ Input.GetKeyDown(KeyCode.Space))
             {
@@ -195,13 +303,26 @@ public class Player : NetworkBehaviour
             if (!anim.GetBool("Keydown") && Input.GetKeyDown(KeyCode.Mouse0))
             {
                 anim.SetBool("Keydown", true);
-                maxSpeed = 3f;
+                anim.speed = 1;
+                Speed = normalSpeed / 2;
                 
             }
             else if (anim.GetBool("Keydown") && Input.GetKeyUp(KeyCode.Mouse0))
             {
                 anim.SetBool("Keydown", false);
-                maxSpeed = 7f;
+                Speed = normalSpeed;
+            }
+
+            if (!anim.GetBool("Keydown") && Input.GetKeyDown(KeyCode.LeftShift))
+            {
+                Speed = runSpeed;
+                anim.speed = 1.5f;
+
+            }
+            else if (!anim.GetBool("Keydown") && Input.GetKeyUp(KeyCode.LeftShift))
+            {
+                Speed = normalSpeed;
+                anim.speed = 1;
             }
 
             if (/*!anim.GetBool("Protect") &&*/ Input.GetKeyDown(KeyCode.Mouse1))
@@ -215,11 +336,6 @@ public class Player : NetworkBehaviour
             {
                 anim.SetBool("Protect", false);
             }*/
-
-			if (Input.GetKeyDown(KeyCode.O))
-			{
-				DestroyPlayer ();
-			}
         }
     }
 
@@ -229,5 +345,19 @@ public class Player : NetworkBehaviour
         Vector3 theScale = transform.localScale;
         theScale.x *= -1;
         transform.localScale = theScale; 
+    }
+
+    [Command]
+    public void CmdSendMessage(string name, string msg, string color)
+    {
+        RpcSendMessage(name, msg, color);
+        menu.newMsg();
+    }
+
+    [ClientRpc]
+    public void RpcSendMessage(string name, string msg, string color)
+    {
+        menu.chat.text += "<color=" + color + ">" + name + "</color> : " + msg + "\n";
+        menu.newMsg();
     }
 }
