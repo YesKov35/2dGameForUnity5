@@ -7,11 +7,17 @@ public class Player : NetworkBehaviour
 {
     [SyncVar]
     public int hp;
+    public int max_hp;
 
     public int stamina;
     public int max_stamina;
+    public int mana;
+    public int max_mana;
     public int exp;
+    public int max_exp;
+    public int level;
 
+    public int damage;
     //Test1
     [SyncVar]
     string namehodamage;
@@ -20,6 +26,7 @@ public class Player : NetworkBehaviour
     public int kill = 0;
 
     int cur_kill = 0;
+    int count_death;
 
     int count = 0;
 
@@ -58,6 +65,8 @@ public class Player : NetworkBehaviour
 
     Menu_HUD menu;
 
+    public bool chat = false;
+
     // Use this for initialization
     void Start ()
     {
@@ -81,13 +90,28 @@ public class Player : NetworkBehaviour
         }
 
         if (isLocalPlayer)
+        {
             menu.player = this;
+            GameObject.FindWithTag("Shop").GetComponent<ShopTrigger>().player = this;
+            Parallaxing p = GameObject.FindWithTag("Parallax").GetComponent<Parallaxing>();
+            
+            p.player = cam;
+            p.clanName = clanName;
+            p.enabled = true;
+        }
+
+
     }
 
 	public bool GetDeath()
 	{
 		return death;
 	}
+
+    public string GetCountDeath()
+    {
+        return count_death.ToString();
+    }
 
     public void Respawn()
     {
@@ -115,9 +139,9 @@ public class Player : NetworkBehaviour
     }
 
     [Command]
-    void CmdHP()
+    void CmdHP(int helth)
     {
-        hp += 100;
+        hp = helth;
     }
 
     public void DestroyPlayer()
@@ -129,6 +153,8 @@ public class Player : NetworkBehaviour
             death = true;
             CmdSetDeath(death);
             CmdKill(namehodamage);
+            count_death++;
+            CmdSendKill();
         }
     }
 
@@ -137,7 +163,7 @@ public class Player : NetworkBehaviour
     {
         if (isLocalPlayer)
         {
-            CmdHit(id[0].ToString(), id[1].ToString(), 10);
+            CmdHit(id[0].ToString(), id[1].ToString(), int.Parse(id[2].ToString()));
         }
     }
 
@@ -174,11 +200,8 @@ public class Player : NetworkBehaviour
     {
         if (isLocalPlayer)
         {
-            GUI.Label(new Rect(Screen.width - 100, 25, 200, 50), "HP: " + hp);
-            GUI.Label(new Rect(Screen.width - 100, 75, 200, 50), "SM: " + stamina);
-            GUI.Label(new Rect(Screen.width - 100, 125, 200, 50), "EXP: " + exp);
-            GUI.Label(new Rect(100, 25, 200, 50), "KILL: " + kill);
-            GUI.Label(new Rect(Screen.width/2, 25, 200, 50), ((int)Time.timeSinceLevelLoad).ToString());
+            //GUI.Label(new Rect(Screen.width - 100, 125, 200, 50), "EXP: " + exp);
+            //GUI.Label(new Rect(100, 225, 200, 50), "KILL: " + kill);
             if (death)
             {
                 GUI.Label(new Rect(Screen.width / 2, Screen.height / 2, 500, 150), ((int)timer).ToString());
@@ -247,11 +270,12 @@ public class Player : NetworkBehaviour
         if (isLocalPlayer)
         {
             menu.Name(namehodamage);
+            menu.Clock.text = ((int)Time.timeSinceLevelLoad).ToString();
             if (hp <= 0 && !death)
             {
                 timer = 0;
                 DestroyPlayer();
-                CmdHP();
+                CmdHP(max_hp);
             }
             else if (death)
             {
@@ -271,18 +295,21 @@ public class Player : NetworkBehaviour
             {
                 int n = (int)Time.timeSinceLevelLoad - count;
 
-                if ((stamina + 10) <= max_stamina && Speed < runSpeed && !anim.GetBool("Keydown"))
+                if ((stamina + 10) <= max_stamina && Speed < runSpeed && !anim.GetBool("Protect") && !anim.GetBool("Keydown"))
                     stamina += 10;
-                else if (Speed == runSpeed && stamina > 0)
+                else if ((Speed == runSpeed  || anim.GetBool("Keydown")) && stamina > 0)
                     stamina -= 10;
                 count = (int)Time.timeSinceLevelLoad;
+
+                if ((mana + 10) <= max_mana)
+                    mana += 10;
             }
             if (cur_kill < kill)
             {
-                exp += (kill - cur_kill) * 20;
+                exp += (kill - cur_kill) * 50;
                 cur_kill = kill;
             }
-            if (!anim.GetBool("Protect") && Input.GetKeyDown(KeyCode.LeftControl) && !anim.GetBool("Spell") && stamina >= 50)
+            if (!anim.GetBool("Protect") && Input.GetKeyDown(KeyCode.LeftControl) && !anim.GetBool("Spell") && mana >= 50)
             {
 				anim.SetBool("Spell", true);
                 if (Body.transform.localScale.x > 0)
@@ -293,9 +320,9 @@ public class Player : NetworkBehaviour
                 {
                     Body.AddForce(new Vector2(-5000, 200));
                 }
-                stamina -= 50;
+                mana -= 50;
             }
-            if (/*grounded &&*/ Input.GetKeyDown(KeyCode.Space))
+            if (grounded && Input.GetKeyDown(KeyCode.Space) && !chat)
             {
                 Body.AddForce(new Vector2(0, jumpForce), ForceMode2D.Force);
             }
@@ -325,17 +352,17 @@ public class Player : NetworkBehaviour
                 anim.speed = 1;
             }
 
-            if (/*!anim.GetBool("Protect") &&*/ Input.GetKeyDown(KeyCode.Mouse1))
+            if (!anim.GetBool("Protect") && Input.GetKeyDown(KeyCode.Mouse1))
             {
                 anim.SetBool("Protect", !anim.GetBool("Protect"));
                 anim.SetFloat("Speed", 0);
                 Body.velocity = new Vector2(0, Body.velocity.y);
 
             }
-            /*if (anim.GetBool("Protect") && Input.GetKeyUp(KeyCode.Mouse1))
+            if (anim.GetBool("Protect") && Input.GetKeyUp(KeyCode.Mouse1))
             {
                 anim.SetBool("Protect", false);
-            }*/
+            }
         }
     }
 
@@ -357,7 +384,26 @@ public class Player : NetworkBehaviour
     [ClientRpc]
     public void RpcSendMessage(string name, string msg, string color)
     {
-        menu.chat.text += "<color=" + color + ">" + name + "</color> : " + msg + "\n";
+        menu.Chat.text += "<color=" + color + ">" + name + "</color> : " + msg + "\n";
         menu.newMsg();
+    }
+
+    [Command]
+    public void CmdSendKill()
+    {
+        RpcSendKill(clanName);
+    }
+
+    [ClientRpc]
+    public void RpcSendKill(string clan)
+    {
+        if(clan == "red")
+        {
+            menu.CountKillsGreen.text = (int.Parse(menu.CountKillsGreen.text) + 1).ToString();
+        }
+        else
+        {
+            menu.CountKillsRed.text = (int.Parse(menu.CountKillsRed.text) + 1).ToString();
+        }
     }
 }

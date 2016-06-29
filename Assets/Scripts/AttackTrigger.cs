@@ -40,9 +40,10 @@ public class AttackTrigger : MonoBehaviour {
                 //gameObject.GetComponentInParent<Player>().kill += 1;
                 //gameObject.SendMessageUpwards("Kill", gameObject.GetComponentInParent<Player>().transform.name);
             //}
-            object[] tempStorage = new object[2];
+            object[] tempStorage = new object[3];
             tempStorage[0] = col.transform.name;
             tempStorage[1] = gameObject.GetComponentInParent<Player>().transform.name;
+            tempStorage[2] = gameObject.GetComponentInParent<Player>().damage;
             gameObject.SendMessageUpwards("Hit", tempStorage);
             //col.GetComponent<Player>().CmdHit(col.transform.name, 10);
         }
