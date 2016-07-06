@@ -5,7 +5,7 @@ using UnityEngine.UI;
 public class Menu_HUD : MonoBehaviour
 {
 
-    public Player player;
+    public PlayerUpdate update;
     public Text text_hp, text_mp, text_sm;
     int hp, mp, sm;
 
@@ -16,8 +16,8 @@ public class Menu_HUD : MonoBehaviour
     public Text CountKillsRed, CountKillsGreen;
     public Text Clock;
     public Scrollbar sb_hp, sb_mp, sb_sm, sb_exp;
-    public Text tx_hp, tx_mp, tx_sm, tx_lvl;
-    public Text kills, death;
+    public Text tx_hp, tx_mp, tx_sm, tx_lvl, tx_gold;
+    public Text kills, death, countUp;
     float timer = 0;
 
     public GameObject stat_panel;
@@ -26,25 +26,27 @@ public class Menu_HUD : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        if (!player.GetDeath())
+        if (!update.GetDeath())
         {
             sb_sm.value = sb_mp.value = sb_hp.value = 0;
-            sb_hp.size = (float)player.hp / player.max_hp;
-            sb_mp.size = (float)player.mana / player.max_mana;
-            sb_sm.size = (float)player.stamina / player.max_stamina;
-            sb_exp.size = (float)player.exp / player.max_exp;
-            tx_hp.text = player.hp + "/" + player.max_hp;
-            tx_mp.text = player.mana + "/" + player.max_mana;
-            tx_sm.text = player.stamina + "/" + player.max_stamina;
-            tx_lvl.text = "level." + player.level;
+            sb_hp.size = (float)update.hp / update.player.max_hp;
+            sb_mp.size = (float)update.player.mana / update.player.max_mana;
+            sb_sm.size = (float)update.player.stamina / update.player.max_stamina;
+            sb_exp.size = (float)update.player.exp / update.player.max_exp;
+            tx_hp.text = update.hp + "/" + update.player.max_hp;
+            tx_mp.text = update.player.mana + "/" + update.player.max_mana;
+            tx_sm.text = update.player.stamina + "/" + update.player.max_stamina;
+            tx_lvl.text = "level." + update.player.level;
+            countUp.text = update.player.countUp.ToString();
 
-            kills.text = player.kill.ToString();
-            death.text = player.GetCountDeath();
+            kills.text = update.kill.ToString();
+            death.text = update.GetCountDeath();
 
             if (sb_exp.size == 1)
             {
-                player.level++;
-                player.exp = 0;
+                update.player.level++;
+                update.player.exp = 0;
+                update.player.countUp += 2;
             }
         }
         if (!Msg.gameObject.active && Chat.gameObject.active)
@@ -62,14 +64,14 @@ public class Menu_HUD : MonoBehaviour
             if (Msg.gameObject.active)
             {
                 if (Msg.text != "")
-                    player.CmdSendMessage(player.transform.name, Msg.text, player.clanName);
+                    update.CmdSendMessage(update.transform.name, Msg.text, update.clanName);
                 Msg.gameObject.active = false;
-                player.chat = false;
+                update.chat = false;
             }
             else
             {
                 Msg.gameObject.active = true;
-                player.chat = true;
+                update.chat = true;
                 Msg.text = "";
             }
             Chat.gameObject.active = true;
@@ -79,23 +81,35 @@ public class Menu_HUD : MonoBehaviour
 
     public void LevelUpHP()
     {
-        hp = int.Parse(text_hp.text) + 1;
-        text_hp.text = hp.ToString();
-        player.max_hp += 50;
+        if (update.player.countUp > 0)
+        {
+            hp = int.Parse(text_hp.text) + 1;
+            text_hp.text = hp.ToString();
+            update.player.max_hp += 50;
+            update.player.countUp--;
+        }
     }
 
     public void LevelUpMP()
     {
-        mp = int.Parse(text_mp.text) + 1;
-        text_mp.text = mp.ToString();
-        player.max_mana += 50;
+        if (update.player.countUp > 0)
+        {
+            mp = int.Parse(text_mp.text) + 1;
+            text_mp.text = mp.ToString();
+            update.player.max_mana += 50;
+            update.player.countUp--;
+        }
     }
 
     public void LevelUpSM()
     {
-        sm = int.Parse(text_sm.text) + 1;
-        text_sm.text = sm.ToString();
-        player.max_stamina += 50;
+        if (update.player.countUp > 0)
+        {
+            sm = int.Parse(text_sm.text) + 1;
+            text_sm.text = sm.ToString();
+            update.player.max_stamina += 50;
+            update.player.countUp--;
+        }
     }
 
     public void newMsg()
@@ -115,12 +129,12 @@ public class Menu_HUD : MonoBehaviour
         if (Msg.gameObject.active)
         {
             Msg.gameObject.active = false;
-            player.chat = false;
+            update.chat = false;
         }
         else
         {
             Msg.gameObject.active = true;
-            player.chat = true;
+            update.chat = true;
         }
     }
 
@@ -132,14 +146,15 @@ public class Menu_HUD : MonoBehaviour
         }
         else
         {
-            playerStat.text = player.max_hp + "\n" + player.max_mana + "\n" + player.max_stamina +
-                 "\n" + player.jumpForce;
+            playerStat.text = update.player.max_hp + "\n" + update.player.max_mana + "\n" + update.player.max_stamina +
+                 "\n" + update.player.jumpForce;
+            tx_gold.text = update.player.gold.ToString();
             stat_panel.SetActive(true);
         }
     }
 
     public void GetExp()
     {
-        player.exp += 50;
+        update.player.exp += 50;
     }
 }

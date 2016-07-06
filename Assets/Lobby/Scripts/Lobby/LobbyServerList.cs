@@ -65,8 +65,6 @@ namespace Prototype.NetworkLobby
         public void ChangePage(int dir)
         {
             int newPage = Mathf.Max(0, currentPage + dir);
-
-            //if we have no server currently displayed, need we need to refresh page0 first instead of trying to fetch any other page
             if (noServerFound.activeSelf)
                 newPage = 0;
 

@@ -2,16 +2,15 @@
 using UnityEngine.UI;
 using System.Collections.Generic;
 
-public class ShopTrigger : MonoBehaviour {
-
-    public string clan;
+public class ShopTrigger : MonoBehaviour
+{
     public bool open = false;
     public Button button_chop;
     public GameObject Shop_panel;
     List<Items> items;
     Button Item;
 
-    public Player player;
+    public PlayerUpdate update;
 
     public Text text, cost;
     
@@ -20,7 +19,7 @@ public class ShopTrigger : MonoBehaviour {
     {
         items = new List<Items>();
         items.Add(new Items("Item1", 400));
-        items.Add(new Items("Item2", 400));
+        items.Add(new Items(ItemStat("JUMP BOOTS", "Jump boots — увеличивают прыжок своему владельцу.\nОсновные бонусы к прыжку от нескольких пар ботинок не складываются.", "+200 ", "к прыжку"), 400));
         items.Add(new Items("Item3", 400));
         items.Add(new Items("Item4", 400));
         items.Add(new Items("Item5", 400));
@@ -30,22 +29,28 @@ public class ShopTrigger : MonoBehaviour {
         items.Add(new Items("Item9", 400));
     }
 
+    string ItemStat(string name, string msg, string statCount, string stat)
+    {
+        return "<color=black>" + name + "</color>\n" + msg + "\n<color=blue>" + statCount + "</color>" + stat;
+    }
+
     void OnTriggerEnter2D(Collider2D col)
     {
-        if (col.CompareTag("Player") && col.transform.name == player.transform.name)
+        //проверяем на локального игрока 
+        if (col.CompareTag("Player") && col.transform.name == update.transform.name)
         {
-            if (clan.Equals(col.GetComponent<Player>().clanName) || !col.GetComponent<Player>().GetDeath())
+            if (!col.GetComponent<PlayerUpdate>().GetDeath())
             {
-                button_chop.gameObject.SetActive(true);
+                button_chop.gameObject.SetActive(true);//активирование кнопки магазин
             }
         }
     }
 
     void OnTriggerExit2D(Collider2D col)
     {
-        if (col.CompareTag("Player") && col.transform.name == player.transform.name)
+        if (col.CompareTag("Player") && col.transform.name == update.transform.name)
         {
-            if (clan.Equals(col.GetComponent<Player>().clanName) || !col.GetComponent<Player>().GetDeath())
+            if (!col.GetComponent<PlayerUpdate>().GetDeath())
             {
                 button_chop.gameObject.SetActive(false);
                 Shop_panel.SetActive(false);
@@ -75,9 +80,9 @@ public class ShopTrigger : MonoBehaviour {
 
     public void ClickBuy()
     {
-        if (player == null)
+        if (update == null)
             return;
         Item.interactable = false;
-        player.jumpForce = player.jumpForce * 2;
+        update.player.jumpForce = update.player.jumpForce * 2;
     }
 }

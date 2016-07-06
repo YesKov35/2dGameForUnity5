@@ -1,5 +1,6 @@
 ﻿
-public class Items{
+public class Items
+{
 
     public string text;
     public int cost;

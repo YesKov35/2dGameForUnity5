@@ -7,8 +7,6 @@ using System.Linq;
 
 namespace Prototype.NetworkLobby
 {
-    //Player entry in the lobby. Handle selecting color/setting name & getting ready for the game
-    //Any LobbyHook can then grab it and pass those value to the game player prefab (see the Pong Example in the Samples Scenes)
     public class LobbyPlayer : NetworkLobbyPlayer
     {
         public Button colorButton;
@@ -20,7 +18,6 @@ namespace Prototype.NetworkLobby
         public GameObject localIcone;
         public GameObject remoteIcone;
 
-        //OnMyName function will be invoked on clients when server change the value of playerName
         [SyncVar(hook = "OnMyName")]
         public string playerName = "";
         [SyncVar(hook = "OnMyColor")]
@@ -51,8 +48,6 @@ namespace Prototype.NetworkLobby
                 SetupOtherPlayer();
             }
 
-            //setup the player data on UI. The value are SyncVar so the player
-            //will be created with the right value currently on server
             OnMyName(playerName);
             OnMyColor(Color.black);
         }
@@ -61,7 +56,6 @@ namespace Prototype.NetworkLobby
         {
             base.OnStartAuthority();
 
-            //if we return from a game, color of text can still be the one for "Ready"
             readyButton.transform.GetChild(0).GetComponent<Text>().color = Color.white;
 
            SetupLocalPlayer();
@@ -98,19 +92,14 @@ namespace Prototype.NetworkLobby
 
             CheckRemoveButton();
 
-            //if (playerColor == Color.white)
-                //CmdColorChange();
-
             ChangeReadyButtonColor(JoinColor);
 
             readyButton.transform.GetChild(0).GetComponent<Text>().text = "JOIN";
             readyButton.interactable = true;
 
-            //have to use child count of player prefab already setup as "this.slot" is not set yet
             if (playerName == "")
                 CmdNameChanged("Player" + (LobbyPlayerList._instance.playerListContentTransform.childCount-1));
 
-            //we switch from simple name display to name input
             colorButton.interactable = true;
             nameInput.interactable = true;
 
@@ -123,12 +112,9 @@ namespace Prototype.NetworkLobby
             readyButton.onClick.RemoveAllListeners();
             readyButton.onClick.AddListener(OnReadyClicked);
 
-            //when OnClientEnterLobby is called, the loval PlayerController is not yet created, so we need to redo that here to disable
-            //the add button if we reach maxLocalPlayer. We pass 0, as it was already counted on OnClientEnterLobby
             if (LobbyManager.s_Singleton != null) LobbyManager.s_Singleton.OnPlayersNumberModified(0);
         }
 
-        //This enable/disable the remove button depending on if that is the only local player or not
         public void CheckRemoveButton()
         {
             if (!isLocalPlayer)
@@ -190,8 +176,6 @@ namespace Prototype.NetworkLobby
 
         //===== UI Handler
 
-        //Note that those handler use Command function, as we need to change the value on the server not locally
-        //so that all client get the new value throught syncvar
         public void OnColorClicked()
         {
             CmdColorChange();
@@ -259,7 +243,6 @@ namespace Prototype.NetworkLobby
             playerName = name;
         }
 
-        //Cleanup thing when get destroy (which happen when client kick or disconnect)
         public void OnDestroy()
         {
             LobbyPlayerList._instance.RemovePlayer(this);

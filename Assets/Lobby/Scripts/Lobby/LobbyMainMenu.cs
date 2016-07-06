@@ -4,7 +4,6 @@ using System.Collections;
 
 namespace Prototype.NetworkLobby
 {
-    //Main menu, mainly only a bunch of callback called by the UI (setup throught the Inspector)
     public class LobbyMainMenu : MonoBehaviour 
     {
         public LobbyManager lobbyManager;
@@ -73,7 +72,6 @@ namespace Prototype.NetworkLobby
         public void OnClickOpenServerList()
         {
             lobbyList.OnEnable();
-            //lobbyManager.ChangeTo(lobbyServerList);
         }
 
         void onEndEditIP(string text)

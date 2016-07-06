@@ -36,12 +36,10 @@ namespace Prototype.NetworkLobby
         public Text Name;
         public Button colorP;
 
-        //Client numPlayers from NetworkManager is always 0, so we count (throught connect/destroy in LobbyPlayer) the number
-        //of players, so that even client know how many player there is.
         [HideInInspector]
         public int _playerNumber = 0;
 
-        //used to disconnect a client properly when exiting the matchmaker
+
         [HideInInspector]
         public bool _isMatchmaking = false;
 
@@ -107,7 +105,6 @@ namespace Prototype.NetworkLobby
 
                 Destroy(GameObject.Find("MainMenuUI(Clone)"));
 
-                //backDelegate = StopGameClbk;
                 topPanel.isInGame = true;
                 topPanel.ToggleVisibility(false);
             }
@@ -246,7 +243,7 @@ namespace Prototype.NetworkLobby
             }
         }
 
-        //allow to handle the (+) button to add/remove player
+
         public void OnPlayersNumberModified(int count)
         {
             _playerNumber += count;
@@ -258,8 +255,6 @@ namespace Prototype.NetworkLobby
 
         // ----------------- Server callbacks ------------------
 
-        //we want to disable the button JOIN if we don't have enough player
-        //But OnLobbyClientConnect isn't called on hosting player. So we override the lobbyPlayer creation
         public override GameObject OnLobbyServerCreateLobbyPlayer(NetworkConnection conn, short playerControllerId)
         {
             GameObject obj = Instantiate(lobbyPlayerPrefab.gameObject) as GameObject;
@@ -314,15 +309,14 @@ namespace Prototype.NetworkLobby
 
         public override bool OnLobbyServerSceneLoadedForPlayer(GameObject lobbyPlayer, GameObject gamePlayer)
         {
-            //This hook allows you to apply state data from the lobby-player to the game-player
-            //just subclass "LobbyHook" and add it to the lobby object.
+
             if (lobbyPlayer.GetComponent<LobbyPlayer>().playerColor == Color.red)
             {
-                gamePlayer.GetComponent<Player>().clanName = "red";
+                gamePlayer.GetComponent<PlayerUpdate>().clanName = "red";
             }
             else
             {
-                gamePlayer.GetComponent<Player>().clanName = "green";
+                gamePlayer.GetComponent<PlayerUpdate>().clanName = "green";
             }
             if (_lobbyHooks)
             {
@@ -359,13 +353,13 @@ namespace Prototype.NetworkLobby
                 int newFloorTime = Mathf.FloorToInt(remainingTime);
 
                 if (newFloorTime != floorTime)
-                {//to avoid flooding the network of message, we only send a notice to client when the number of plain seconds change.
+                {
                     floorTime = newFloorTime;
 
                     for (int i = 0; i < lobbySlots.Length; ++i)
                     {
                         if (lobbySlots[i] != null)
-                        {//there is maxPlayer slots, so some could be == null, need to test it before accessing!
+                        {
                             (lobbySlots[i] as LobbyPlayer).RpcUpdateCountdown(floorTime);
                         }
                     }
@@ -394,7 +388,7 @@ namespace Prototype.NetworkLobby
             conn.RegisterHandler(MsgKicked, KickedMessageHandler);
 
             if (!NetworkServer.active)
-            {//only to do on pure client (not self hosting client)
+            {
                 ChangeTo(lobbyPanel);
                 backDelegate = StopClientClbk;
             }
