@@ -182,8 +182,6 @@ public class PlayerUpdate : NetworkBehaviour
 
     void FixedUpdate()
     {
-        //if (death)
-           // return;
         if (hit)
         {
             gameObject.GetComponent<Animation>().Play("damage");
@@ -191,6 +189,8 @@ public class PlayerUpdate : NetworkBehaviour
         }
         if (isLocalPlayer)
         {
+            if (death)
+                return;
             grounded = Physics2D.OverlapCircle(groundCheck.position, groundRadius, whatIsGround);
             anim.SetBool("Ground", grounded);
 

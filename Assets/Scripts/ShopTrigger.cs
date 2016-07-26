@@ -18,15 +18,15 @@ public class ShopTrigger : MonoBehaviour
     void Start()
     {
         items = new List<Items>();
-        items.Add(new Items("Item1", 400));
         items.Add(new Items(ItemStat("JUMP BOOTS", "Jump boots — увеличивают прыжок своему владельцу.\nОсновные бонусы к прыжку от нескольких пар ботинок не складываются.", "+200 ", "к прыжку"), 400));
-        items.Add(new Items("Item3", 400));
-        items.Add(new Items("Item4", 400));
-        items.Add(new Items("Item5", 400));
-        items.Add(new Items("Item6", 400));
-        items.Add(new Items("Item7", 400));
-        items.Add(new Items("Item8", 400));
-        items.Add(new Items("Item9", 400));
+        items.Add(new Items(ItemStat("JUMP BOOTS", "Jump boots — увеличивают прыжок своему владельцу.\nОсновные бонусы к прыжку от нескольких пар ботинок не складываются.", "+200 ", "к прыжку"), 400));
+        items.Add(new Items(ItemStat("JUMP BOOTS", "Jump boots — увеличивают прыжок своему владельцу.\nОсновные бонусы к прыжку от нескольких пар ботинок не складываются.", "+200 ", "к прыжку"), 400));
+        items.Add(new Items(ItemStat("JUMP BOOTS", "Jump boots — увеличивают прыжок своему владельцу.\nОсновные бонусы к прыжку от нескольких пар ботинок не складываются.", "+200 ", "к прыжку"), 400));
+        items.Add(new Items(ItemStat("JUMP BOOTS", "Jump boots — увеличивают прыжок своему владельцу.\nОсновные бонусы к прыжку от нескольких пар ботинок не складываются.", "+200 ", "к прыжку"), 400));
+        items.Add(new Items(ItemStat("JUMP BOOTS", "Jump boots — увеличивают прыжок своему владельцу.\nОсновные бонусы к прыжку от нескольких пар ботинок не складываются.", "+200 ", "к прыжку"), 400));
+        items.Add(new Items(ItemStat("JUMP BOOTS", "Jump boots — увеличивают прыжок своему владельцу.\nОсновные бонусы к прыжку от нескольких пар ботинок не складываются.", "+200 ", "к прыжку"), 400));
+        items.Add(new Items(ItemStat("JUMP BOOTS", "Jump boots — увеличивают прыжок своему владельцу.\nОсновные бонусы к прыжку от нескольких пар ботинок не складываются.", "+200 ", "к прыжку"), 400));
+        items.Add(new Items(ItemStat("JUMP BOOTS", "Jump boots — увеличивают прыжок своему владельцу.\nОсновные бонусы к прыжку от нескольких пар ботинок не складываются.", "+200 ", "к прыжку"), 400));
     }
 
     string ItemStat(string name, string msg, string statCount, string stat)
